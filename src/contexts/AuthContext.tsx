@@ -5,7 +5,8 @@ interface AuthContextType {
   isLoggedIn: boolean;
   userEmail: string | null;
   userName: string | null;
-  login: (email: string) => void;
+  userRole: 'user' | 'admin' | null;
+  login: (email: string, role?: 'user' | 'admin') => void;
   logout: () => void;
   signup: (email: string, name: string) => void;
 }
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   userEmail: null,
   userName: null,
+  userRole: null,
   login: () => {},
   logout: () => {},
   signup: () => {},
@@ -29,46 +31,62 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<'user' | 'admin' | null>(null);
 
   useEffect(() => {
-    // Check if user is logged in on initial load
     const storedLoginStatus = localStorage.getItem("isLoggedIn");
     const storedUserEmail = localStorage.getItem("userEmail");
     const storedUserName = localStorage.getItem("userName");
+    const storedUserRole = localStorage.getItem("userRole") as 'user' | 'admin';
     
     if (storedLoginStatus === "true") {
       setIsLoggedIn(true);
       setUserEmail(storedUserEmail);
       setUserName(storedUserName);
+      setUserRole(storedUserRole);
     }
   }, []);
 
-  const login = (email: string) => {
+  const login = (email: string, role: 'user' | 'admin' = 'user') => {
     setIsLoggedIn(true);
     setUserEmail(email);
+    setUserRole(role);
+    
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("userEmail", email);
+    localStorage.setItem("userRole", role);
   };
 
   const logout = () => {
     setIsLoggedIn(false);
     setUserEmail(null);
     setUserName(null);
+    setUserRole(null);
+    
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userName");
+    localStorage.removeItem("userRole");
   };
 
   const signup = (email: string, name: string) => {
-    // In a real application, this would involve API calls to create a user
-    // For now, we'll just store the information
     localStorage.setItem("registeredEmail", email);
     localStorage.setItem("registeredName", name);
     setUserName(name);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, userEmail, userName, login, logout, signup }}>
+    <AuthContext.Provider 
+      value={{ 
+        isLoggedIn, 
+        userEmail, 
+        userName, 
+        userRole, 
+        login, 
+        logout, 
+        signup 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -28,6 +28,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
   
@@ -44,18 +45,18 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      console.log("Login attempt with:", values);
+      const isAdminLogin = values.email.includes('admin');
       
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      login(values.email);
+      login(values.email, isAdminLogin ? 'admin' : 'user');
       
       toast({
         title: "Login successful",
-        description: "Welcome back!",
+        description: isAdminLogin ? "Welcome, Admin!" : "Welcome back!",
       });
       
-      navigate("/");
+      navigate(isAdminLogin ? "/admin" : "/");
     } catch (error) {
       console.error("Login failed:", error);
       toast({
