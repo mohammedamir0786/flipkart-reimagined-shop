@@ -7,29 +7,40 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 
 interface ProductsTablePaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  isLoading?: boolean;
 }
 
 const ProductsTablePagination = ({
   currentPage,
   totalPages,
   onPageChange,
+  isLoading = false,
 }: ProductsTablePaginationProps) => {
   // Generate the page numbers to show
   const generatePaginationItems = () => {
+    // If there are no pages, return nothing
+    if (totalPages <= 0) return [];
+    
     const items = [];
     
     // Always show first page
     items.push(
       <PaginationItem key="first">
         <PaginationLink
-          onClick={() => onPageChange(1)}
+          onClick={(e) => {
+            e.preventDefault();
+            if (!isLoading) onPageChange(1);
+          }}
           isActive={currentPage === 1}
+          className={isLoading ? "opacity-50 pointer-events-none" : ""}
+          aria-disabled={isLoading}
         >
           1
         </PaginationLink>
@@ -40,7 +51,7 @@ const ProductsTablePagination = ({
     if (currentPage > 3) {
       items.push(
         <PaginationItem key="ellipsis-start">
-          <span className="flex h-9 w-9 items-center justify-center">...</span>
+          <PaginationEllipsis />
         </PaginationItem>
       );
     }
@@ -54,8 +65,13 @@ const ProductsTablePagination = ({
         items.push(
           <PaginationItem key={i}>
             <PaginationLink
-              onClick={() => onPageChange(i)}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!isLoading) onPageChange(i);
+              }}
               isActive={currentPage === i}
+              className={isLoading ? "opacity-50 pointer-events-none" : ""}
+              aria-disabled={isLoading}
             >
               {i}
             </PaginationLink>
@@ -68,7 +84,7 @@ const ProductsTablePagination = ({
     if (currentPage < totalPages - 2) {
       items.push(
         <PaginationItem key="ellipsis-end">
-          <span className="flex h-9 w-9 items-center justify-center">...</span>
+          <PaginationEllipsis />
         </PaginationItem>
       );
     }
@@ -78,8 +94,13 @@ const ProductsTablePagination = ({
       items.push(
         <PaginationItem key="last">
           <PaginationLink
-            onClick={() => onPageChange(totalPages)}
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isLoading) onPageChange(totalPages);
+            }}
             isActive={currentPage === totalPages}
+            className={isLoading ? "opacity-50 pointer-events-none" : ""}
+            aria-disabled={isLoading}
           >
             {totalPages}
           </PaginationLink>
@@ -95,10 +116,17 @@ const ProductsTablePagination = ({
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious
-            onClick={() => onPageChange(currentPage - 1)}
-            className={currentPage === 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-            tabIndex={currentPage === 1 ? -1 : undefined}
-            aria-disabled={currentPage === 1}
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isLoading && currentPage > 1) onPageChange(currentPage - 1);
+            }}
+            className={
+              currentPage === 1 || isLoading
+                ? "opacity-50 pointer-events-none"
+                : "cursor-pointer"
+            }
+            tabIndex={currentPage === 1 || isLoading ? -1 : undefined}
+            aria-disabled={currentPage === 1 || isLoading}
           />
         </PaginationItem>
         
@@ -106,10 +134,17 @@ const ProductsTablePagination = ({
         
         <PaginationItem>
           <PaginationNext
-            onClick={() => onPageChange(currentPage + 1)}
-            className={currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-            tabIndex={currentPage === totalPages ? -1 : undefined}
-            aria-disabled={currentPage === totalPages}
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isLoading && currentPage < totalPages) onPageChange(currentPage + 1);
+            }}
+            className={
+              currentPage === totalPages || isLoading
+                ? "opacity-50 pointer-events-none"
+                : "cursor-pointer"
+            }
+            tabIndex={currentPage === totalPages || isLoading ? -1 : undefined}
+            aria-disabled={currentPage === totalPages || isLoading}
           />
         </PaginationItem>
       </PaginationContent>

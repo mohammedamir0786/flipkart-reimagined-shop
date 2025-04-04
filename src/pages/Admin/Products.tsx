@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Search, Plus, Trash2, Edit, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import ProductsTablePagination from "@/components/ProductsTablePagination";
+import imageCompression from "browser-image-compression";
 
 const ITEMS_PER_PAGE = 5; // Number of products per page
 
@@ -33,36 +34,67 @@ const Products = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
-  // Combine all products from mock data
-  const allProducts = [...featuredProducts, ...newArrivals, ...topDeals];
+  // Fetch products with pagination and filtering
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage, searchQuery]);
   
-  // Remove duplicates (some products might be in multiple categories)
-  const uniqueProducts = allProducts.filter(
-    (product, index, self) => index === self.findIndex((p) => p.id === product.id)
-  );
-  
-  // Filter products based on search query
-  const filteredProducts = uniqueProducts.filter(
-    (product) => product.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  
-  const handleChangePage = useCallback((page: number) => {
-    if (page < 1 || page > totalPages) return;
+  const fetchProducts = async () => {
     setIsLoading(true);
     
-    // Simulate API loading delay
-    setTimeout(() => {
-      setCurrentPage(page);
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    try {
+      // Combine all products from mock data
+      const allProducts = [...featuredProducts, ...newArrivals, ...topDeals];
+      
+      // Remove duplicates (some products might be in multiple categories)
+      const uniqueProducts = allProducts.filter(
+        (product, index, self) => index === self.findIndex((p) => p.id === product.id)
+      );
+      
+      // Filter products based on search query
+      const filteredProducts = uniqueProducts.filter(
+        (product) => product.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      
+      // Store total count for pagination
+      setTotalProducts(filteredProducts.length);
+      
+      // Calculate pagination
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+      
+      // Update products state
+      setProducts(paginatedProducts);
+      
+      console.log(`Fetched ${paginatedProducts.length} products (page ${currentPage})`);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load products. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 300);
-  }, [totalPages]);
+    }
+  };
+  
+  const handleChangePage = useCallback((page: number) => {
+    if (page < 1) return;
+    setCurrentPage(page);
+    // Scroll to top of table when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
   
   const handleDeleteProduct = (id: number) => {
     // In a real app, this would delete from the database
@@ -73,29 +105,78 @@ const Products = () => {
       title: "Product deleted",
       description: "The product has been successfully removed",
     });
+    
+    // Refresh products
+    fetchProducts();
   };
   
   const handleEditProduct = (product: Product) => {
     setCurrentProduct(product);
+    setPreviewImage(product.image);
     setIsEditModalOpen(true);
   };
   
   const handleAddProduct = () => {
     setCurrentProduct(null);
+    setSelectedImage(null);
+    setPreviewImage(null);
     setIsAddModalOpen(true);
+  };
+  
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    
+    try {
+      // Compress the image before uploading
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      };
+      
+      const compressedFile = await imageCompression(file, options);
+      console.log(`Original file size: ${file.size / 1024 / 1024} MB`);
+      console.log(`Compressed file size: ${compressedFile.size / 1024 / 1024} MB`);
+      
+      setSelectedImage(compressedFile);
+      
+      // Create preview URL
+      const previewURL = URL.createObjectURL(compressedFile);
+      setPreviewImage(previewURL);
+      
+      toast({
+        title: "Image compressed",
+        description: `Reduced from ${(file.size / 1024 / 1024).toFixed(2)}MB to ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
+      });
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
   
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, this would save to the database
     console.log("Saving product:", currentProduct);
+    console.log("With image:", selectedImage);
     
     // Close the modal
     setIsAddModalOpen(false);
     setIsEditModalOpen(false);
     
-    // Reset current product
+    // Reset current product and image
     setCurrentProduct(null);
+    setSelectedImage(null);
+    setPreviewImage(null);
     
     toast({
       title: isEditModalOpen ? "Product updated" : "Product added",
@@ -103,7 +184,13 @@ const Products = () => {
         ? "The product has been successfully updated" 
         : "The product has been successfully added",
     });
+    
+    // Refresh products
+    fetchProducts();
   };
+  
+  // Calculate totalPages
+  const totalPages = Math.max(1, Math.ceil(totalProducts / ITEMS_PER_PAGE));
 
   return (
     <div className="space-y-6">
@@ -174,8 +261,8 @@ const Products = () => {
                   </TableCell>
                 </TableRow>
               ))
-            ) : paginatedProducts.length > 0 ? (
-              paginatedProducts.map((product) => (
+            ) : products.length > 0 ? (
+              products.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>
                     <div className="w-16 h-16 relative">
@@ -184,7 +271,11 @@ const Products = () => {
                           src={product.image}
                           alt={product.title}
                           className="object-cover"
-                          loading="lazy" // Add lazy loading for images
+                          loading="lazy"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "https://placehold.co/100x100/gray/white?text=No+Image";
+                          }}
                         />
                       </AspectRatio>
                     </div>
@@ -227,12 +318,13 @@ const Products = () => {
       </div>
       
       {/* Pagination */}
-      {filteredProducts.length > 0 && (
+      {totalProducts > 0 && (
         <div className="flex justify-center">
           <ProductsTablePagination 
             currentPage={currentPage} 
             totalPages={totalPages} 
-            onPageChange={handleChangePage} 
+            onPageChange={handleChangePage}
+            isLoading={isLoading}
           />
         </div>
       )}
@@ -246,11 +338,35 @@ const Products = () => {
           <form onSubmit={handleSaveProduct}>
             <div className="space-y-4 py-4">
               <div className="flex justify-center">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 w-32 h-32 flex items-center justify-center">
-                  <div className="text-center">
-                    <Upload className="h-8 w-8 mx-auto text-gray-400" />
-                    <span className="text-sm text-gray-500">Upload Image</span>
-                  </div>
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-4 w-32 h-32 flex items-center justify-center relative ${
+                    previewImage ? 'border-primary' : 'border-gray-300'
+                  }`}
+                >
+                  {previewImage ? (
+                    <img
+                      src={previewImage}
+                      alt="Product preview"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="h-8 w-8 mx-auto text-gray-400" />
+                      <span className="text-sm text-gray-500">Upload Image</span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={handleImageSelect}
+                    disabled={isUploading}
+                  />
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <div className="loader animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid gap-4">
@@ -309,13 +425,31 @@ const Products = () => {
             <form onSubmit={handleSaveProduct}>
               <div className="space-y-4 py-4">
                 <div className="flex justify-center">
-                  <div className="border rounded-lg w-32 h-32 overflow-hidden">
-                    <img
-                      src={currentProduct.image}
-                      alt={currentProduct.title}
-                      className="w-full h-full object-cover"
-                      loading="lazy" // Add lazy loading
+                  <div className="border-2 border-dashed rounded-lg p-4 w-32 h-32 flex items-center justify-center relative">
+                    {previewImage ? (
+                      <img
+                        src={previewImage}
+                        alt={currentProduct.title}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <Upload className="h-8 w-8 mx-auto text-gray-400" />
+                        <span className="text-sm text-gray-500">Change Image</span>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={handleImageSelect}
+                      disabled={isUploading}
                     />
+                    {isUploading && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="loader animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="grid gap-4">
