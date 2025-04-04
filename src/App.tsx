@@ -11,6 +11,11 @@ import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import AdminRoutes from "./components/AdminRoutes";
+import Dashboard from "./pages/Admin/Dashboard";
+import Products from "./pages/Admin/Products";
+import Users from "./pages/Admin/Users";
+import Orders from "./pages/Admin/Orders";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +32,16 @@ const App = () => (
             <Route path="/cart" element={<Cart />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminRoutes />}>
+              <Route index element={<Dashboard />} />
+              <Route path="products" element={<Products />} />
+              <Route path="users" element={<Users />} />
+              <Route path="orders" element={<Orders />} />
+            </Route>
+            
+            {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
