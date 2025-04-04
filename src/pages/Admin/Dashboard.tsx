@@ -72,7 +72,7 @@ const Dashboard = () => {
         <Card className="p-4">
           <h3 className="text-lg font-medium mb-4">Monthly Sales</h3>
           <div className="h-80">
-            <ChartContainer config={{ sales: { theme: { light: '#2563EB' } } }}>
+            <ChartContainer config={{ sales: { theme: { light: '#2563EB', dark: '#3B82F6' } } }}>
               <BarChart data={salesData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
