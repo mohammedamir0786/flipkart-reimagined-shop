@@ -4,11 +4,12 @@ import CategoryBar from "@/components/CategoryBar";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import ProductCarousel from "@/components/ProductCarousel";
+import Chatbot from "@/components/Chatbot";
 import { bannerImages, featuredProducts, newArrivals, topDeals } from "@/data/mockData";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
+    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900">
       <Header />
       <CategoryBar />
       
@@ -43,6 +44,7 @@ const Index = () => {
       </main>
       
       <Footer />
+      <Chatbot />
     </div>
   );
 };
