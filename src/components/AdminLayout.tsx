@@ -1,6 +1,6 @@
 
 import { ReactNode } from "react";
-import { Menu, Package, BarChart2, Users, ShoppingBag, LogOut } from "lucide-react";
+import { Menu, Package, BarChart2, Users, ShoppingBag, LogOut, UserCog } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,17 +19,18 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { name: "Products", path: "/admin/products", icon: Package },
     { name: "Users", path: "/admin/users", icon: Users },
     { name: "Orders", path: "/admin/orders", icon: ShoppingBag },
+    { name: "Admin Users", path: "/admin/manage-admins", icon: UserCog },
   ];
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-md">
-        <div className="p-4 border-b">
+      <div className="w-64 bg-white dark:bg-gray-800 shadow-md">
+        <div className="p-4 border-b dark:border-gray-700">
           <Link to="/" className="flex items-center">
             <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/flipkart-plus_8d85f4.png" 
                  alt="Flipkart" className="h-6" />
-            <span className="ml-2 font-bold text-flipkart-blue">Admin</span>
+            <span className="ml-2 font-bold text-flipkart-blue dark:text-blue-400">Admin</span>
           </Link>
         </div>
         <nav className="p-4">
@@ -41,8 +42,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   className={cn(
                     "flex items-center p-2 rounded-md transition-colors",
                     location.pathname === item.path 
-                      ? "bg-flipkart-blue text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-flipkart-blue text-white dark:bg-blue-600"
+                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                   )}
                 >
                   <item.icon className="w-5 h-5 mr-3" />
@@ -54,7 +55,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           <div className="absolute bottom-4 left-4 right-4">
             <Button 
               variant="outline" 
-              className="w-full flex items-center justify-center" 
+              className="w-full flex items-center justify-center dark:border-gray-600 dark:text-gray-200" 
               onClick={logout}
             >
               <LogOut className="w-4 h-4 mr-2" />

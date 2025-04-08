@@ -18,6 +18,7 @@ import Dashboard from "./pages/Admin/Dashboard";
 import Products from "./pages/Admin/Products";
 import Users from "./pages/Admin/Users";
 import Orders from "./pages/Admin/Orders";
+import ManageAdmins from "./pages/Admin/ManageAdmins";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
                 <Route path="products" element={<Products />} />
                 <Route path="users" element={<Users />} />
                 <Route path="orders" element={<Orders />} />
+                <Route path="manage-admins" element={<ManageAdmins />} />
               </Route>
               
               {/* Catch-all Route */}
