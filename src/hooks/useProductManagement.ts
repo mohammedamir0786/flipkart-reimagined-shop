@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Product } from "@/types/index";
 import { featuredProducts, newArrivals, topDeals } from "@/data/mockData";
@@ -33,13 +32,11 @@ export const useProductManagement = () => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     
     try {
-      // Convert the mock data products to match the required Product type
       const allMockProducts = [...featuredProducts, ...newArrivals, ...topDeals];
       
-      // Map the mock products to ensure they have the required description field
       const allProducts: Product[] = allMockProducts.map(product => ({
         ...product,
-        description: product.description || `Description for ${product.title}`, // Provide default description if missing
+        description: product.description || `Description for ${product.title}`,
       }));
       
       const uniqueProducts = allProducts.filter(
@@ -138,12 +135,28 @@ export const useProductManagement = () => {
     }
   };
 
+  const isEnglishText = (text: string): boolean => {
+    if (!text.trim()) return true;
+    const englishPattern = /^[\x00-\x7F\s.,!?;:()"'-]+$/;
+    const nonLatinCharCount = text.split('').filter(char => !englishPattern.test(char)).length;
+    return nonLatinCharCount / text.length < 0.1;
+  };
+
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Saving product:", currentProduct);
     console.log("With image:", selectedImage);
     console.log("With description:", productDescription);
     console.log("Is AI generated:", isAIGenerated);
+    
+    if (productDescription && !isEnglishText(productDescription)) {
+      toast({
+        title: "Validation Error",
+        description: "Product description must be in English",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsAddModalOpen(false);
     setIsEditModalOpen(false);
@@ -169,6 +182,15 @@ export const useProductManagement = () => {
   };
 
   const handleAcceptAIDescription = (description: string) => {
+    if (!isEnglishText(description)) {
+      toast({
+        title: "Validation Error",
+        description: "AI-generated description contains non-English text. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setProductDescription(description);
     setIsAIGenerated(true);
     

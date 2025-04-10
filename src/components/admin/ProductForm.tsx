@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { Upload, Sparkles } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Upload, Sparkles, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   TooltipTrigger, 
   TooltipContent 
 } from "@/components/ui/tooltip";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProductFormProps {
   product?: Product | null;
@@ -40,8 +41,44 @@ const ProductForm = ({
   onOpenAIModal,
   isEditMode = false
 }: ProductFormProps) => {
+  const [descriptionError, setDescriptionError] = useState<string | null>(null);
+
+  // Function to detect if text is likely English
+  const isEnglishText = (text: string): boolean => {
+    // Skip validation for empty strings
+    if (!text.trim()) return true;
+    
+    // Simple regex to check if text contains primarily Latin characters
+    // This is a basic check that will allow English and other Latin-based languages
+    const englishPattern = /^[\x00-\x7F\s.,!?;:()"'-]+$/;
+    
+    // We'll consider text English if at least 90% of characters are Latin-based
+    const nonLatinCharCount = text.split('').filter(char => !englishPattern.test(char)).length;
+    return nonLatinCharCount / text.length < 0.1;
+  };
+
+  // Validate description when it changes
+  useEffect(() => {
+    if (productDescription && !isEnglishText(productDescription)) {
+      setDescriptionError("Description must be in English");
+    } else {
+      setDescriptionError(null);
+    }
+  }, [productDescription]);
+
+  // Modified form submission to include validation
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (descriptionError) {
+      return; // Don't submit if there's an error
+    }
+    
+    onSubmit(e);
+  };
+
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={handleSubmit}>
       <div className="space-y-4 py-4">
         <div className="flex justify-center">
           <div 
@@ -142,8 +179,9 @@ const ProductForm = ({
             <div className="relative">
               <Textarea
                 id={`${isEditMode ? 'edit-' : ''}description`}
-                placeholder="Enter product description or generate one using AI"
-                className={`min-h-24 ${isAIGenerated ? 'border-blue-400 bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
+                placeholder="Enter product description or generate one using AI (English only)"
+                className={`min-h-24 ${isAIGenerated ? 'border-blue-400 bg-blue-50/30 dark:bg-blue-900/10' : ''} 
+                ${descriptionError ? 'border-red-400' : ''}`}
                 value={productDescription}
                 onChange={(e) => {
                   setProductDescription(e.target.value);
@@ -159,6 +197,12 @@ const ProductForm = ({
                 </Badge>
               )}
             </div>
+            {descriptionError && (
+              <Alert variant="destructive" className="mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{descriptionError}</AlertDescription>
+              </Alert>
+            )}
           </div>
         </div>
       </div>
