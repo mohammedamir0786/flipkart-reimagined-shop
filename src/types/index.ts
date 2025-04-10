@@ -4,7 +4,7 @@ export interface Product {
   title: string;
   price: number;
   originalPrice?: number;
-  description?: string;
+  description: string;  // Changed from optional to required since it's being used
   rating: number;
   reviews: number;
   image: string;
