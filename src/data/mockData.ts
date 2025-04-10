@@ -1,5 +1,5 @@
 
-import { Product } from "@/components/ProductCard";
+import { Product } from "@/types/index";
 
 export const featuredProducts: Product[] = [
   {
@@ -11,6 +11,7 @@ export const featuredProducts: Product[] = [
     discount: 12,
     rating: 4.7,
     reviews: 9243,
+    description: "The iPhone 15 features a 6.1-inch display, A15 Bionic chip, and an advanced dual-camera system for stunning photos and videos.",
     assured: true,
   },
   {
@@ -22,6 +23,7 @@ export const featuredProducts: Product[] = [
     discount: 16,
     rating: 4.5,
     reviews: 6789,
+    description: "Galaxy S23 Ultra features a 200MP camera, S Pen, and powerful Snapdragon processor for ultimate mobile performance.",
     assured: true,
   },
   {
@@ -33,6 +35,7 @@ export const featuredProducts: Product[] = [
     discount: 14,
     rating: 4.8,
     reviews: 3421,
+    description: "Industry-leading noise cancellation and exceptional sound quality with 30 hours of battery life.",
     assured: true,
   },
   {
@@ -44,6 +47,7 @@ export const featuredProducts: Product[] = [
     discount: 16,
     rating: 4.9,
     reviews: 5678,
+    description: "M2 chip delivers powerful performance in an incredibly thin and light design with up to 18 hours of battery life.",
     assured: true,
   },
   {
@@ -55,6 +59,7 @@ export const featuredProducts: Product[] = [
     discount: 14,
     rating: 4.6,
     reviews: 2341,
+    description: "Gaming laptop featuring NVIDIA GeForce RTX graphics, AMD Ryzen processor, and high-refresh display.",
     assured: true,
   },
   {
@@ -66,6 +71,7 @@ export const featuredProducts: Product[] = [
     discount: 62,
     rating: 4.3,
     reviews: 87654,
+    description: "Wireless headphones with 15 hours of playtime, 40mm dynamic drivers, and ergonomic design.",
     assured: false,
   },
   {
@@ -77,6 +83,7 @@ export const featuredProducts: Product[] = [
     discount: 39,
     rating: 4.4,
     reviews: 12345,
+    description: "Experience 4K resolution, Dolby Vision, HDR10, and built-in Chromecast for seamless entertainment.",
     assured: true,
   },
   {
@@ -88,6 +95,7 @@ export const featuredProducts: Product[] = [
     discount: 33,
     rating: 4.2,
     reviews: 4567,
+    description: "Track your health and fitness with advanced sensors, sleep coaching, and personalized workouts.",
     assured: true,
   },
 ];
@@ -102,6 +110,7 @@ export const newArrivals: Product[] = [
     discount: 12,
     rating: 4.5,
     reviews: 1234,
+    description: "The latest flagship with Snapdragon 8 Gen 3, Hasselblad cameras, and 100W fast charging.",
     assured: true,
   },
   {
@@ -113,6 +122,7 @@ export const newArrivals: Product[] = [
     discount: 10,
     rating: 4.7,
     reviews: 543,
+    description: "The ultimate iPad experience with M4 chip, stunning Liquid Retina XDR display, and 5G connectivity.",
     assured: true,
   },
   {
@@ -124,6 +134,7 @@ export const newArrivals: Product[] = [
     discount: 29,
     rating: 4.4,
     reviews: 876,
+    description: "Immerse yourself in stunning 4K HDR with TRILUMINOS Pro and Cognitive Processor XR for lifelike picture quality.",
     assured: true,
   },
   {
@@ -135,6 +146,7 @@ export const newArrivals: Product[] = [
     discount: 16,
     rating: 4.6,
     reviews: 321,
+    description: "Revolutionary vacuum with laser dust detection technology and intelligent suction power optimization.",
     assured: true,
   },
   {
@@ -146,6 +158,7 @@ export const newArrivals: Product[] = [
     discount: 8,
     rating: 4.5,
     reviews: 654,
+    description: "Experience the ultimate foldable phone with S Pen compatibility, large immersive display, and multitasking capabilities.",
     assured: true,
   },
   {
@@ -157,6 +170,7 @@ export const newArrivals: Product[] = [
     discount: 28,
     rating: 4.3,
     reviews: 2345,
+    description: "AI Direct Drive technology detects fabric types and optimizes washing motions for cleaner clothes with less damage.",
     assured: true,
   },
 ];
@@ -171,6 +185,7 @@ export const topDeals: Product[] = [
     discount: 62,
     rating: 4.2,
     reviews: 23456,
+    description: "1.85\" AMOLED display, Bluetooth calling, 100+ sports modes, and 7-day battery life.",
     assured: false,
   },
   {
@@ -182,6 +197,7 @@ export const topDeals: Product[] = [
     discount: 87,
     rating: 4.1,
     reviews: 34567,
+    description: "Bluetooth calling, AI voice assistant, and health monitoring in an elegant stainless steel body.",
     assured: false,
   },
   {
@@ -193,6 +209,7 @@ export const topDeals: Product[] = [
     discount: 59,
     rating: 4.3,
     reviews: 45678,
+    description: "Quick heating element, auto shut-off, and boil-dry protection for safe and efficient use.",
     assured: false,
   },
   {
@@ -204,6 +221,7 @@ export const topDeals: Product[] = [
     discount: 53,
     rating: 4.0,
     reviews: 67890,
+    description: "Lightweight, breathable mesh upper with cushioned sole for all-day comfort during activities.",
     assured: false,
   },
   {
@@ -215,6 +233,7 @@ export const topDeals: Product[] = [
     discount: 50,
     rating: 4.4,
     reviews: 12345,
+    description: "Premium cotton shirt with wrinkle-resistant fabric, perfect for both casual and formal occasions.",
     assured: true,
   },
   {
@@ -226,6 +245,7 @@ export const topDeals: Product[] = [
     discount: 65,
     rating: 4.1,
     reviews: 34567,
+    description: "Large capacity kettle with concealed heating element and automatic shut-off for safety.",
     assured: false,
   },
 ];

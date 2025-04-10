@@ -3,18 +3,7 @@ import { Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-
-export interface Product {
-  id: number;
-  title: string;
-  image: string;
-  price: number;
-  originalPrice?: number;
-  discount?: number;
-  rating: number;
-  reviews: number;
-  assured?: boolean;
-}
+import { Product } from "@/types/index";
 
 interface ProductCardProps {
   product: Product;

@@ -33,16 +33,27 @@ export const useProductManagement = () => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     
     try {
-      const allProducts = [...featuredProducts, ...newArrivals, ...topDeals];
+      // Convert the mock data products to match the required Product type
+      const allMockProducts = [...featuredProducts, ...newArrivals, ...topDeals];
+      
+      // Map the mock products to ensure they have the required description field
+      const allProducts: Product[] = allMockProducts.map(product => ({
+        ...product,
+        description: product.description || `Description for ${product.title}`, // Provide default description if missing
+      }));
+      
       const uniqueProducts = allProducts.filter(
         (product, index, self) => index === self.findIndex((p) => p.id === product.id)
       );
+      
       const filteredProducts = uniqueProducts.filter(
         (product) => product.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
+      
       setTotalProducts(filteredProducts.length);
       const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
       const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+      
       setProducts(paginatedProducts);
       console.log(`Fetched ${paginatedProducts.length} products (page ${currentPage})`);
     } catch (error) {
