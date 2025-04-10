@@ -1,7 +1,8 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
-import ProductCard, { Product } from "./ProductCard";
+import ProductCard from "./ProductCard";
+import { Product } from "@/types/index";
 import { Button } from "@/components/ui/button";
 
 interface ProductCarouselProps {

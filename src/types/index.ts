@@ -4,7 +4,7 @@ export interface Product {
   title: string;
   price: number;
   originalPrice?: number;
-  description: string;  // Changed from optional to required since it's being used
+  description: string;
   rating: number;
   reviews: number;
   image: string;
@@ -12,4 +12,5 @@ export interface Product {
   isNew?: boolean;
   discount?: number;
   stock?: number;
+  assured?: boolean;
 }

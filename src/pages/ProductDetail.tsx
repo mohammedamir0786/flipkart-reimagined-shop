@@ -26,7 +26,7 @@ import {
 import ProductCarousel from "@/components/ProductCarousel";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Product } from "@/components/ProductCard";
+import { Product } from "@/types/index";
 import { useToast } from "@/components/ui/use-toast";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 
