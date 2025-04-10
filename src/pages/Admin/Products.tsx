@@ -1,5 +1,4 @@
-
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Search, Plus, Trash2, Edit, Upload, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,7 @@ import {
   DialogFooter 
 } from "@/components/ui/dialog";
 import { featuredProducts, newArrivals, topDeals } from "@/data/mockData";
-import { Product } from "@/components/ProductCard";
+import { Product } from "@/types/index";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
@@ -30,7 +29,7 @@ import AIDescriptionModal from "@/components/AIDescriptionModal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 
-const ITEMS_PER_PAGE = 5; // Number of products per page
+const ITEMS_PER_PAGE = 5;
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,43 +45,28 @@ const Products = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [productDescription, setProductDescription] = useState("");
-  const [isAIGenerated, setIsAIGenerated] = useState(false);
-  
-  // Fetch products with pagination and filtering
+
   useEffect(() => {
     fetchProducts();
   }, [currentPage, searchQuery]);
-  
+
   const fetchProducts = async () => {
     setIsLoading(true);
     
-    // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 800));
     
     try {
-      // Combine all products from mock data
       const allProducts = [...featuredProducts, ...newArrivals, ...topDeals];
-      
-      // Remove duplicates (some products might be in multiple categories)
       const uniqueProducts = allProducts.filter(
         (product, index, self) => index === self.findIndex((p) => p.id === product.id)
       );
-      
-      // Filter products based on search query
       const filteredProducts = uniqueProducts.filter(
         (product) => product.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      
-      // Store total count for pagination
       setTotalProducts(filteredProducts.length);
-      
-      // Calculate pagination
       const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
       const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-      
-      // Update products state
       setProducts(paginatedProducts);
-      
       console.log(`Fetched ${paginatedProducts.length} products (page ${currentPage})`);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -95,45 +79,39 @@ const Products = () => {
       setIsLoading(false);
     }
   };
-  
+
   const handleChangePage = useCallback((page: number) => {
     if (page < 1) return;
     setCurrentPage(page);
-    // Scroll to top of table when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
-  
+
   const handleDeleteProduct = (id: number) => {
-    // In a real app, this would delete from the database
     console.log(`Deleting product with id: ${id}`);
-    // Then refetch products
-    
     toast({
       title: "Product deleted",
       description: "The product has been successfully removed",
     });
-    
-    // Refresh products
     fetchProducts();
   };
-  
+
   const handleEditProduct = (product: Product) => {
     setCurrentProduct(product);
     setPreviewImage(product.image);
     setProductDescription(product.description || "");
-    setIsAIGenerated(false); // Reset AI generated flag
+    setIsAIGenerated(false);
     setIsEditModalOpen(true);
   };
-  
+
   const handleAddProduct = () => {
     setCurrentProduct(null);
     setSelectedImage(null);
     setPreviewImage(null);
     setProductDescription("");
-    setIsAIGenerated(false); // Reset AI generated flag
+    setIsAIGenerated(false);
     setIsAddModalOpen(true);
   };
-  
+
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -141,7 +119,6 @@ const Products = () => {
     setIsUploading(true);
     
     try {
-      // Compress the image before uploading
       const options = {
         maxSizeMB: 1,
         maxWidthOrHeight: 1024,
@@ -154,7 +131,6 @@ const Products = () => {
       
       setSelectedImage(compressedFile);
       
-      // Create preview URL
       const previewURL = URL.createObjectURL(compressedFile);
       setPreviewImage(previewURL);
       
@@ -173,20 +149,18 @@ const Products = () => {
       setIsUploading(false);
     }
   };
-  
+
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would save to the database
+    console.log("Saving product description:", productDescription);
     console.log("Saving product:", currentProduct);
     console.log("With image:", selectedImage);
     console.log("With description:", productDescription);
     console.log("Is AI generated:", isAIGenerated);
     
-    // Close the modal
     setIsAddModalOpen(false);
     setIsEditModalOpen(false);
     
-    // Reset current product and image
     setCurrentProduct(null);
     setSelectedImage(null);
     setPreviewImage(null);
@@ -200,7 +174,6 @@ const Products = () => {
         : "The product has been successfully added",
     });
     
-    // Refresh products
     fetchProducts();
   };
 
@@ -217,8 +190,7 @@ const Products = () => {
       description: "AI-generated description has been added to your product.",
     });
   };
-  
-  // Calculate totalPages
+
   const totalPages = Math.max(1, Math.ceil(totalProducts / ITEMS_PER_PAGE));
 
   return (
@@ -233,7 +205,6 @@ const Products = () => {
         </Button>
       </div>
       
-      {/* Search and filters */}
       <div className="flex gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
@@ -243,13 +214,12 @@ const Products = () => {
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
-              setCurrentPage(1); // Reset to first page on search
+              setCurrentPage(1);
             }}
           />
         </div>
       </div>
       
-      {/* Products table */}
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
@@ -264,7 +234,6 @@ const Products = () => {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              // Loading state with skeletons
               Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
                 <TableRow key={`skeleton-${i}`}>
                   <TableCell>
@@ -346,7 +315,6 @@ const Products = () => {
         </Table>
       </div>
       
-      {/* Pagination */}
       {totalProducts > 0 && (
         <div className="flex justify-center">
           <ProductsTablePagination 
@@ -358,7 +326,6 @@ const Products = () => {
         </div>
       )}
       
-      {/* Add Product Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -492,7 +459,6 @@ const Products = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Edit Product Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -623,8 +589,7 @@ const Products = () => {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* AI Description Generator Modal */}
+      
       <AIDescriptionModal
         open={isAIModalOpen}
         onOpenChange={setIsAIModalOpen}
