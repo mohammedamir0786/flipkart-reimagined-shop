@@ -1,8 +1,9 @@
 
 import { useState, useCallback, useEffect } from "react";
-import { Search, Plus, Trash2, Edit, Upload } from "lucide-react";
+import { Search, Plus, Trash2, Edit, Upload, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Table, 
   TableBody, 
@@ -25,6 +26,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import ProductsTablePagination from "@/components/ProductsTablePagination";
 import imageCompression from "browser-image-compression";
+import AIDescriptionModal from "@/components/AIDescriptionModal";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 const ITEMS_PER_PAGE = 5; // Number of products per page
 
@@ -32,6 +36,7 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +45,8 @@ const Products = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [productDescription, setProductDescription] = useState("");
+  const [isAIGenerated, setIsAIGenerated] = useState(false);
   
   // Fetch products with pagination and filtering
   useEffect(() => {
@@ -113,6 +120,8 @@ const Products = () => {
   const handleEditProduct = (product: Product) => {
     setCurrentProduct(product);
     setPreviewImage(product.image);
+    setProductDescription(product.description || "");
+    setIsAIGenerated(false); // Reset AI generated flag
     setIsEditModalOpen(true);
   };
   
@@ -120,6 +129,8 @@ const Products = () => {
     setCurrentProduct(null);
     setSelectedImage(null);
     setPreviewImage(null);
+    setProductDescription("");
+    setIsAIGenerated(false); // Reset AI generated flag
     setIsAddModalOpen(true);
   };
   
@@ -168,6 +179,8 @@ const Products = () => {
     // In a real app, this would save to the database
     console.log("Saving product:", currentProduct);
     console.log("With image:", selectedImage);
+    console.log("With description:", productDescription);
+    console.log("Is AI generated:", isAIGenerated);
     
     // Close the modal
     setIsAddModalOpen(false);
@@ -177,6 +190,8 @@ const Products = () => {
     setCurrentProduct(null);
     setSelectedImage(null);
     setPreviewImage(null);
+    setProductDescription("");
+    setIsAIGenerated(false);
     
     toast({
       title: isEditModalOpen ? "Product updated" : "Product added",
@@ -187,6 +202,20 @@ const Products = () => {
     
     // Refresh products
     fetchProducts();
+  };
+
+  const handleOpenAIModal = () => {
+    setIsAIModalOpen(true);
+  };
+
+  const handleAcceptAIDescription = (description: string) => {
+    setProductDescription(description);
+    setIsAIGenerated(true);
+    
+    toast({
+      title: "Description applied",
+      description: "AI-generated description has been added to your product.",
+    });
   };
   
   // Calculate totalPages
@@ -403,6 +432,54 @@ const Products = () => {
                     />
                   </div>
                 </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label htmlFor="description" className="text-sm font-medium">
+                      Product Description
+                    </label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleOpenAIModal();
+                            }}
+                            className="flex items-center gap-1 h-7 px-2"
+                          >
+                            <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+                            <span className="text-xs">Generate with AI</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Generate a product description using AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="relative">
+                    <Textarea
+                      id="description"
+                      placeholder="Enter product description or generate one using AI"
+                      className={`min-h-24 ${isAIGenerated ? 'border-blue-400 bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
+                      value={productDescription}
+                      onChange={(e) => {
+                        setProductDescription(e.target.value);
+                        if (isAIGenerated) setIsAIGenerated(false);
+                      }}
+                    />
+                    {isAIGenerated && (
+                      <Badge 
+                        variant="info" 
+                        className="absolute top-2 right-2"
+                      >
+                        AI Generated
+                      </Badge>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
             <DialogFooter>
@@ -486,6 +563,54 @@ const Products = () => {
                       />
                     </div>
                   </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="edit-description" className="text-sm font-medium">
+                        Product Description
+                      </label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleOpenAIModal();
+                              }}
+                              className="flex items-center gap-1 h-7 px-2"
+                            >
+                              <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+                              <span className="text-xs">Generate with AI</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Generate a product description using AI</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <div className="relative">
+                      <Textarea
+                        id="edit-description"
+                        placeholder="Enter product description or generate one using AI"
+                        className={`min-h-24 ${isAIGenerated ? 'border-blue-400 bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
+                        value={productDescription}
+                        onChange={(e) => {
+                          setProductDescription(e.target.value);
+                          if (isAIGenerated) setIsAIGenerated(false);
+                        }}
+                      />
+                      {isAIGenerated && (
+                        <Badge 
+                          variant="info" 
+                          className="absolute top-2 right-2"
+                        >
+                          AI Generated
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
               <DialogFooter>
@@ -498,6 +623,14 @@ const Products = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* AI Description Generator Modal */}
+      <AIDescriptionModal
+        open={isAIModalOpen}
+        onOpenChange={setIsAIModalOpen}
+        onAccept={handleAcceptAIDescription}
+        productTitle={currentProduct?.title}
+      />
     </div>
   );
 };
