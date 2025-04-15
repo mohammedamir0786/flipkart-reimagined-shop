@@ -1,6 +1,5 @@
-
 import { ReactNode } from "react";
-import { Menu, Package, BarChart2, Users, ShoppingBag, LogOut, UserCog, MessageSquare } from "lucide-react";
+import { Menu, Package, BarChart2, Users, ShoppingBag, LogOut, UserCog, MessageSquare, IndianRupee } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +20,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { name: "Users", path: "/admin/users", icon: Users },
     { name: "Orders", path: "/admin/orders", icon: ShoppingBag },
     { name: "Admin Users", path: "/admin/manage-admins", icon: UserCog },
+    { name: "Payment Analytics", path: "/admin/payment-analytics", icon: IndianRupee },
   ];
 
   return (

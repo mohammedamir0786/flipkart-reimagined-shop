@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,7 @@ import Users from "./pages/Admin/Users";
 import Orders from "./pages/Admin/Orders";
 import ManageAdmins from "./pages/Admin/ManageAdmins";
 import ManageReviews from "./pages/Admin/ManageReviews";
+import PaymentMethods from "./pages/Admin/PaymentMethods";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +47,7 @@ const App = () => (
                 <Route path="orders" element={<Orders />} />
                 <Route path="manage-admins" element={<ManageAdmins />} />
                 <Route path="reviews" element={<ManageReviews />} />
+                <Route path="payment-analytics" element={<PaymentMethods />} />
               </Route>
               
               {/* Catch-all Route */}
