@@ -1,9 +1,11 @@
+
 import { ReactNode } from "react";
-import { Menu, Package, BarChart2, Users, ShoppingBag, LogOut, UserCog, MessageSquare, IndianRupee } from "lucide-react";
+import { Menu, Package, BarChart2, Users, ShoppingBag, LogOut, UserCog, MessageSquare, IndianRupee, Shield } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -12,15 +14,57 @@ interface AdminLayoutProps {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { logout } = useAuth();
   const location = useLocation();
+  const { hasPermission } = usePermissions();
 
   const navItems = [
-    { name: "Dashboard", path: "/admin", icon: BarChart2 },
-    { name: "Products", path: "/admin/products", icon: Package },
-    { name: "Reviews", path: "/admin/reviews", icon: MessageSquare },
-    { name: "Users", path: "/admin/users", icon: Users },
-    { name: "Orders", path: "/admin/orders", icon: ShoppingBag },
-    { name: "Admin Users", path: "/admin/manage-admins", icon: UserCog },
-    { name: "Payment Analytics", path: "/admin/payment-analytics", icon: IndianRupee },
+    { 
+      name: "Dashboard", 
+      path: "/admin", 
+      icon: BarChart2,
+      requiredPermission: { module: "analytics", action: "view" }
+    },
+    { 
+      name: "Products", 
+      path: "/admin/products", 
+      icon: Package,
+      requiredPermission: { module: "products", action: "view" }
+    },
+    { 
+      name: "Reviews", 
+      path: "/admin/reviews", 
+      icon: MessageSquare,
+      requiredPermission: { module: "reviews", action: "view" }
+    },
+    { 
+      name: "Users", 
+      path: "/admin/users", 
+      icon: Users,
+      requiredPermission: { module: "users", action: "view" }
+    },
+    { 
+      name: "Orders", 
+      path: "/admin/orders", 
+      icon: ShoppingBag,
+      requiredPermission: { module: "orders", action: "view" }
+    },
+    { 
+      name: "Admin Users", 
+      path: "/admin/manage-admins", 
+      icon: UserCog,
+      requiredPermission: { module: "admins", action: "view" }
+    },
+    { 
+      name: "Payment Analytics", 
+      path: "/admin/payment-analytics", 
+      icon: IndianRupee,
+      requiredPermission: { module: "analytics", action: "view" }
+    },
+    { 
+      name: "Role Management", 
+      path: "/admin/role-management", 
+      icon: Shield,
+      requiredPermission: { module: "admins", action: "edit" } // Only admin editors can manage roles
+    },
   ];
 
   return (
@@ -36,22 +80,29 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         </div>
         <nav className="p-4">
           <ul className="space-y-2">
-            {navItems.map((item) => (
-              <li key={item.name}>
-                <Link 
-                  to={item.path} 
-                  className={cn(
-                    "flex items-center p-2 rounded-md transition-colors",
-                    location.pathname === item.path 
-                      ? "bg-flipkart-blue text-white dark:bg-blue-600"
-                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                  )}
-                >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  <span>{item.name}</span>
-                </Link>
-              </li>
-            ))}
+            {navItems.map((item) => {
+              // Only show nav items the user has permission to access
+              if (!hasPermission(item.requiredPermission.module, item.requiredPermission.action)) {
+                return null;
+              }
+              
+              return (
+                <li key={item.name}>
+                  <Link 
+                    to={item.path} 
+                    className={cn(
+                      "flex items-center p-2 rounded-md transition-colors",
+                      location.pathname === item.path 
+                        ? "bg-flipkart-blue text-white dark:bg-blue-600"
+                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    )}
+                  >
+                    <item.icon className="w-5 h-5 mr-3" />
+                    <span>{item.name}</span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
           <div className="absolute bottom-4 left-4 right-4">
             <Button 

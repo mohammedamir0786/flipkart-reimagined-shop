@@ -21,6 +21,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+
+// Mock roles for dropdown
+const mockRoles = [
+  { id: 1, name: "Super Admin" },
+  { id: 2, name: "Product Manager" },
+  { id: 3, name: "Order Manager" },
+  { id: 4, name: "Analytics Viewer" },
+];
 
 interface AdminUser {
   id: number;
@@ -52,6 +61,18 @@ type FormValues = z.infer<typeof formSchema>;
 
 const AdminUserModal = ({ isOpen, onClose, admin }: AdminUserModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Fetch roles - would come from API in production
+  const { data: roles = mockRoles } = useQuery({
+    queryKey: ['roles'],
+    queryFn: async () => {
+      // In a real app, fetch from API:
+      // const response = await fetch('/api/roles');
+      // return await response.json();
+      
+      return mockRoles;
+    },
+  });
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -196,9 +217,9 @@ const AdminUserModal = ({ isOpen, onClose, admin }: AdminUserModalProps) => {
                       className="w-full p-2 border border-gray-300 rounded-md bg-transparent"
                       {...field}
                     >
-                      <option value="Super Admin">Super Admin</option>
-                      <option value="Product Manager">Product Manager</option>
-                      <option value="Order Manager">Order Manager</option>
+                      {roles.map((role) => (
+                        <option key={role.id} value={role.name}>{role.name}</option>
+                      ))}
                     </select>
                   </FormControl>
                   <FormMessage />
