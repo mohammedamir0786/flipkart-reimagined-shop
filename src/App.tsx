@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,6 +21,7 @@ import ManageAdmins from "./pages/Admin/ManageAdmins";
 import ManageReviews from "./pages/Admin/ManageReviews";
 import PaymentMethods from "./pages/Admin/PaymentMethods";
 import RoleManagement from "./pages/Admin/RoleManagement";
+import OrderHeatmap from "./pages/Admin/OrderHeatmap";
 
 const queryClient = new QueryClient();
 
@@ -41,7 +41,6 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               
-              {/* Admin Routes */}
               <Route path="/admin" element={<AdminRoutes />}>
                 <Route index element={<Dashboard />} />
                 <Route path="products" element={<Products />} />
@@ -54,7 +53,6 @@ const App = () => (
                 <Route path="order-heatmap" element={<OrderHeatmap />} />
               </Route>
               
-              {/* Catch-all Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
