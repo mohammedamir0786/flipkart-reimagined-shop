@@ -2,6 +2,17 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 
+// Define Permission type as a record of actions to boolean values
+// This makes it compatible with the [x: string]: boolean expected structure
+export type Permission = {
+  [action: string]: boolean;
+};
+
+// Define PermissionModule type as a record of module names to Permission objects
+export type PermissionModule = {
+  [module: string]: Permission;
+};
+
 // Mock data for role permissions
 const mockRolePermissions = {
   "Super Admin": {

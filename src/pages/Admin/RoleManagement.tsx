@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,9 +6,18 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import RoleModal from "@/components/RoleModal";
 import { toast } from "@/hooks/use-toast";
+import { Permission, PermissionModule } from "@/hooks/usePermissions";
+
+// Define the Role type
+export interface Role {
+  id: number;
+  name: string;
+  description: string;
+  permissions: PermissionModule;
+}
 
 // Mock data for roles
-const mockRoles = [
+const mockRoles: Role[] = [
   {
     id: 1,
     name: "Super Admin",
@@ -63,28 +71,6 @@ const mockRoles = [
     }
   },
 ];
-
-// Define the Role and Permission types
-export interface Permission {
-  view: boolean;
-  create: boolean;
-  edit: boolean;
-  delete: boolean;
-}
-
-export interface Role {
-  id: number;
-  name: string;
-  description: string;
-  permissions: {
-    users: Permission;
-    products: Permission;
-    orders: Permission;
-    reviews: Permission;
-    analytics: Permission;
-    admins: Permission;
-  };
-}
 
 const RoleManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
