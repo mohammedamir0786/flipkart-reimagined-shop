@@ -1,4 +1,3 @@
-
 import { ReactNode } from "react";
 import { Menu, Package, BarChart2, Users, ShoppingBag, LogOut, UserCog, MessageSquare, IndianRupee, Shield } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
@@ -64,6 +63,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       path: "/admin/role-management", 
       icon: Shield,
       requiredPermission: { module: "admins", action: "edit" } // Only admin editors can manage roles
+    },
+    { 
+      name: "Order Heatmap", 
+      path: "/admin/order-heatmap", 
+      icon: BarChart2,
+      requiredPermission: { module: "analytics", action: "view" }
     },
   ];
 

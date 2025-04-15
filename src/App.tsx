@@ -51,6 +51,7 @@ const App = () => (
                 <Route path="reviews" element={<ManageReviews />} />
                 <Route path="payment-analytics" element={<PaymentMethods />} />
                 <Route path="role-management" element={<RoleManagement />} />
+                <Route path="order-heatmap" element={<OrderHeatmap />} />
               </Route>
               
               {/* Catch-all Route */}
