@@ -91,7 +91,7 @@ const ReturnRequests = () => {
       if (request.id === selectedRequest.id) {
         return {
           ...request,
-          status: actionType === "approve" ? "approved" : "rejected",
+          status: actionType === "approve" ? "approved" : "rejected" as ReturnRequest["status"],
           dateResolved: new Date().toISOString(),
         };
       }
