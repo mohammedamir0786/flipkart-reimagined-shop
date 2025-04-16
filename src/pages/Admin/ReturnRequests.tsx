@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { ReturnRequest } from "@/types";
 import { format } from "date-fns";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, Eye, FileText, XCircle } from "lucide-react";
 
 const initialReturnRequests: ReturnRequest[] = [
   {
@@ -69,13 +69,37 @@ const ReturnRequests = () => {
   const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>(initialReturnRequests);
   const [selectedRequest, setSelectedRequest] = useState<ReturnRequest | null>(null);
   const [actionType, setActionType] = useState<"approve" | "reject" | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data = returnRequests } = useQuery({
     queryKey: ["returnRequests"],
     queryFn: async () => {
-      // In production, fetch from API
+      // In production, this would be an API call
       return returnRequests;
+    },
+  });
+
+  const updateReturnRequestMutation = useMutation({
+    mutationFn: async (variables: { requestId: string; status: ReturnRequest["status"]; notes?: string }) => {
+      // In production, this would be an API call
+      const updatedRequests = returnRequests.map(request => {
+        if (request.id === variables.requestId) {
+          return {
+            ...request,
+            status: variables.status,
+            dateResolved: new Date().toISOString(),
+            adminNotes: variables.notes,
+          };
+        }
+        return request;
+      });
+      setReturnRequests(updatedRequests);
+      return updatedRequests;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["returnRequests"] });
     },
   });
 
@@ -87,24 +111,13 @@ const ReturnRequests = () => {
   const confirmAction = async () => {
     if (!selectedRequest || !actionType) return;
 
-    const updatedRequests = returnRequests.map(request => {
-      if (request.id === selectedRequest.id) {
-        return {
-          ...request,
-          status: actionType === "approve" ? "approved" : "rejected" as ReturnRequest["status"],
-          dateResolved: new Date().toISOString(),
-        };
-      }
-      return request;
+    const status = actionType === "approve" ? "approved" : "rejected" as ReturnRequest["status"];
+
+    await updateReturnRequestMutation.mutate({
+      requestId: selectedRequest.id,
+      status,
+      notes: `Return request ${status} on ${format(new Date(), "PPp")}`,
     });
-
-    // Update local state
-    setReturnRequests(updatedRequests);
-
-    // In production, make API call:
-    // await fetch(`/api/returns/${selectedRequest.id}/${actionType}`, {
-    //   method: "PUT",
-    // });
 
     toast({
       title: `Return Request ${actionType === "approve" ? "Approved" : "Rejected"}`,
@@ -127,11 +140,23 @@ const ReturnRequests = () => {
     }
   };
 
+  const formatDate = (date: string) => {
+    return format(new Date(date), "PPp");
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Return Requests</h1>
-        <p className="text-gray-500">Manage customer return requests</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Return Requests</h1>
+          <p className="text-gray-500">Manage customer return requests</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
       </div>
 
       <div className="border rounded-lg">
@@ -154,29 +179,42 @@ const ReturnRequests = () => {
                 <TableCell>{request.customerName}</TableCell>
                 <TableCell>{request.productName}</TableCell>
                 <TableCell>{request.reason}</TableCell>
-                <TableCell>{format(new Date(request.dateRequested), "PPp")}</TableCell>
+                <TableCell>{formatDate(request.dateRequested)}</TableCell>
                 <TableCell>{getStatusBadge(request.status)}</TableCell>
                 <TableCell>
-                  {request.status === "pending" && (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleAction(request, "approve")}
-                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleAction(request, "reject")}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    {request.status === "pending" && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleAction(request, "approve")}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleAction(request, "reject")}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setSelectedRequest(request);
+                        setIsDetailsOpen(true);
+                      }}
+                      className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -184,7 +222,7 @@ const ReturnRequests = () => {
         </Table>
       </div>
 
-      <AlertDialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
+      <AlertDialog open={!!selectedRequest && !!actionType} onOpenChange={() => setSelectedRequest(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -202,6 +240,59 @@ const ReturnRequests = () => {
             <AlertDialogAction onClick={confirmAction}>
               {actionType?.charAt(0).toUpperCase()}{actionType?.slice(1)}
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Return Request Details</AlertDialogTitle>
+          </AlertDialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Order ID</p>
+                  <p>{selectedRequest.orderId}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Status</p>
+                  <div>{getStatusBadge(selectedRequest.status)}</div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Customer</p>
+                  <p>{selectedRequest.customerName}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Product</p>
+                  <p>{selectedRequest.productName}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-gray-500">Reason</p>
+                  <p>{selectedRequest.reason}</p>
+                </div>
+                {selectedRequest.adminNotes && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-gray-500">Admin Notes</p>
+                    <p>{selectedRequest.adminNotes}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Date Requested</p>
+                  <p>{formatDate(selectedRequest.dateRequested)}</p>
+                </div>
+                {selectedRequest.dateResolved && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Date Resolved</p>
+                    <p>{formatDate(selectedRequest.dateResolved)}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsDetailsOpen(false)}>Close</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
