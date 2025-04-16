@@ -26,7 +26,7 @@ import { ReturnRequest } from "@/types";
 import { format } from "date-fns";
 import { CheckCircle2, XCircle } from "lucide-react";
 
-const mockReturnRequests: ReturnRequest[] = [
+const initialReturnRequests: ReturnRequest[] = [
   {
     id: "RET001",
     orderId: "ORD123",
@@ -66,17 +66,16 @@ const mockReturnRequests: ReturnRequest[] = [
 ];
 
 const ReturnRequests = () => {
+  const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>(initialReturnRequests);
   const [selectedRequest, setSelectedRequest] = useState<ReturnRequest | null>(null);
   const [actionType, setActionType] = useState<"approve" | "reject" | null>(null);
   const { toast } = useToast();
 
-  const { data: returnRequests = mockReturnRequests } = useQuery({
+  const { data = returnRequests } = useQuery({
     queryKey: ["returnRequests"],
     queryFn: async () => {
-      // In production, fetch from API:
-      // const response = await fetch("/api/returns");
-      // return response.json();
-      return mockReturnRequests;
+      // In production, fetch from API
+      return returnRequests;
     },
   });
 
@@ -88,12 +87,25 @@ const ReturnRequests = () => {
   const confirmAction = async () => {
     if (!selectedRequest || !actionType) return;
 
+    const updatedRequests = returnRequests.map(request => {
+      if (request.id === selectedRequest.id) {
+        return {
+          ...request,
+          status: actionType === "approve" ? "approved" : "rejected",
+          dateResolved: new Date().toISOString(),
+        };
+      }
+      return request;
+    });
+
+    // Update local state
+    setReturnRequests(updatedRequests);
+
     // In production, make API call:
     // await fetch(`/api/returns/${selectedRequest.id}/${actionType}`, {
     //   method: "PUT",
     // });
 
-    // Simulate API call
     toast({
       title: `Return Request ${actionType === "approve" ? "Approved" : "Rejected"}`,
       description: `Return request ${selectedRequest.id} has been ${actionType}d.`,
@@ -136,7 +148,7 @@ const ReturnRequests = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {returnRequests.map((request) => (
+            {data.map((request) => (
               <TableRow key={request.id}>
                 <TableCell>{request.orderId}</TableCell>
                 <TableCell>{request.customerName}</TableCell>
