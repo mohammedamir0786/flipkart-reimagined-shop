@@ -68,15 +68,27 @@ const PlaceOrder = () => {
   const handlePlaceOrder = () => {
     setIsProcessing(true);
 
-    // Simulate order processing
+    // Validate required fields
+    if (paymentMethod === "creditCard") {
+      if (!cardDetails.number || !cardDetails.name || !cardDetails.expiry || !cardDetails.cvv) {
+        toast({
+          title: "Missing information",
+          description: "Please fill in all card details",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
+      }
+    }
+
+    // In a real app, this would be an API call to process payment and create order
     setTimeout(() => {
       setIsProcessing(false);
       toast({
         title: "Order placed successfully!",
-        description: "Thank you for your purchase. Your order is being processed.",
-        variant: "success",
+        description: "Thank you for your purchase. You can track your order in your account.",
       });
-      navigate("/orders");
+      navigate("/returns"); // Redirect to returns page for demo
     }, 2000);
   };
 
