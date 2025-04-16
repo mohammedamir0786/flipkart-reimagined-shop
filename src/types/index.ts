@@ -1,4 +1,3 @@
-
 export interface Product {
   id: number;
   title: string;
@@ -35,4 +34,18 @@ export interface ReviewFilters {
   minRating: number;
   status: ReviewStatus | 'all';
   searchQuery: string;
+}
+
+export interface ReturnRequest {
+  id: string;
+  orderId: string;
+  customerId: string;
+  customerName: string;
+  productId: string;
+  productName: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  dateRequested: string;
+  dateResolved?: string;
+  adminNotes?: string;
 }

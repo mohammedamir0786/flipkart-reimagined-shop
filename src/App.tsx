@@ -22,6 +22,7 @@ import ManageReviews from "./pages/Admin/ManageReviews";
 import PaymentMethods from "./pages/Admin/PaymentMethods";
 import RoleManagement from "./pages/Admin/RoleManagement";
 import OrderHeatmap from "./pages/Admin/OrderHeatmap";
+import ReturnRequests from "./pages/Admin/ReturnRequests";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
                 <Route path="reviews" element={<ManageReviews />} />
                 <Route path="payment-analytics" element={<PaymentMethods />} />
                 <Route path="role-management" element={<RoleManagement />} />
+                <Route path="returns" element={<ReturnRequests />} />
                 <Route path="order-heatmap" element={<OrderHeatmap />} />
               </Route>
               

@@ -70,6 +70,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       icon: BarChart2,
       requiredPermission: { module: "analytics", action: "view" }
     },
+    { 
+      name: "Return Requests", 
+      path: "/admin/returns", 
+      icon: Package,
+      requiredPermission: { module: "returns", action: "view" }
+    },
   ];
 
   return (
