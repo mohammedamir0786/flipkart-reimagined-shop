@@ -26,7 +26,7 @@ if (supabaseAnonKey === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 // Mock implementation for functions.invoke when using placeholder credentials
 const originalInvoke = supabase.functions.invoke;
-supabase.functions.invoke = async (functionName: string, options?: any) => {
+supabase.functions.invoke = async function mockInvoke<T>(functionName: string, options?: any) {
   if (supabaseUrl === 'https://placeholder-project.supabase.co' || 
       supabaseAnonKey === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0') {
     console.warn(`Mock function call to "${functionName}". Connect to a real Supabase project to use this feature.`);
@@ -34,7 +34,11 @@ supabase.functions.invoke = async (functionName: string, options?: any) => {
     // For the create-payment function, return a mock response
     if (functionName === 'create-payment') {
       if (options?.body?.customerInfo?.email?.includes('error')) {
-        return { error: 'Payment error', status: 500 };
+        return { 
+          data: null,
+          error: 'Payment error', 
+          status: 500 
+        };
       }
       
       return { 
@@ -43,12 +47,13 @@ supabase.functions.invoke = async (functionName: string, options?: any) => {
           session_id: 'mock_session_id',
           order_id: 'mock_order_id'
         }, 
+        error: null,
         status: 200 
       };
     }
     
-    return { data: null, error: null };
+    return { data: null, error: null, status: 200 };
   }
   
   return originalInvoke(functionName, options);
-};
+} as typeof supabase.functions.invoke;
