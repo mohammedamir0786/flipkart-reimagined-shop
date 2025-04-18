@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -7,9 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Eye, Filter } from "lucide-react";
+import { AlertCircle, Eye, Filter, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
+// We'll still use mock data as fallback
 const ordersMockData = [
   { id: "ORD-001", customer: "John Doe", date: "12 May 2023", total: "₹12,499", status: "Delivered", items: [{ name: "iPhone 15", qty: 1, price: "₹69,999" }, { name: "Case Cover", qty: 1, price: "₹999" }], address: "123 Main St, Bangalore, Karnataka", payment: "Credit Card" },
   { id: "ORD-002", customer: "Jane Smith", date: "14 May 2023", total: "₹8,999", status: "Shipped", items: [{ name: "Samsung S23", qty: 1, price: "₹79,999" }], address: "456 Park Ave, Mumbai, Maharashtra", payment: "UPI" },
@@ -19,11 +21,67 @@ const ordersMockData = [
 ];
 
 const Orders = () => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
   const { toast } = useToast();
+
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        // Format the orders data to match our UI expectations
+        const formattedOrders = data.map(order => ({
+          id: order.id ? `ORD-${order.id.slice(0, 6)}` : `ORD-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+          customer: order.customer_name || 'Guest',
+          date: new Date(order.created_at).toLocaleDateString('en-US', { 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric' 
+          }),
+          total: `$${order.total.toFixed(2)}`,
+          status: order.status,
+          items: Array.isArray(order.items) ? order.items.map(item => ({ 
+            name: item.name, 
+            qty: item.quantity, 
+            price: `$${(item.price * item.quantity).toFixed(2)}` 
+          })) : [],
+          address: order.customer_address || 'No address provided',
+          payment: order.payment_method || 'Online'
+        }));
+        
+        setOrders(formattedOrders);
+      } else {
+        // Use mock data when no real orders are available
+        setOrders(ordersMockData);
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast({
+        title: "Error",
+        description: "Could not fetch orders. Using mock data instead.",
+        variant: "destructive",
+      });
+      setOrders(ordersMockData);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
@@ -36,27 +94,42 @@ const Orders = () => {
   };
 
   const filteredOrders = statusFilter === "all" 
-    ? ordersMockData 
-    : ordersMockData.filter(order => order.status.toLowerCase() === statusFilter.toLowerCase());
+    ? orders 
+    : orders.filter(order => order.status.toLowerCase() === statusFilter.toLowerCase());
 
-  const handleStatusChange = (orderId: string, newStatus: string) => {
-    // In a real app, this would make an API call to update the order status
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
     setIsLoading(true);
     
-    // Simulate API call with timeout
-    setTimeout(() => {
-      const updatedOrder = ordersMockData.find(order => order.id === orderId);
-      if (updatedOrder) {
-        updatedOrder.status = newStatus;
+    try {
+      // Extract the actual ID from the formatted order ID (remove "ORD-" prefix)
+      const dbOrderId = orderId.replace('ORD-', '');
+      
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', dbOrderId);
         
-        toast({
-          title: "Order Status Updated",
-          description: `Order ${orderId} is now ${newStatus}`,
-          variant: "default",
-        });
-      }
+      if (error) throw error;
+      
+      // Update the local state
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      ));
+      
+      toast({
+        title: "Order Status Updated",
+        description: `Order ${orderId} is now ${newStatus}`,
+      });
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update order status",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   const handleOpenDetails = (order: any) => {
@@ -72,23 +145,30 @@ const Orders = () => {
       </div>
       
       {/* Filters */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center">
-          <Filter className="mr-2 h-4 w-4 text-gray-500" />
-          <span className="text-sm font-medium">Filter by status:</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center">
+            <Filter className="mr-2 h-4 w-4 text-gray-500" />
+            <span className="text-sm font-medium">Filter by status:</span>
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="shipped">Shipped</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Orders</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="shipped">Shipped</SelectItem>
-            <SelectItem value="delivered">Delivered</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+        
+        <Button variant="outline" onClick={fetchOrders} className="flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Refresh
+        </Button>
       </div>
       
       {/* Orders table */}

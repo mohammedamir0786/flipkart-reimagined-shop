@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, CreditCard, Truck, Home, MapPin, ChevronsRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -12,6 +13,7 @@ import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const deliveryOptions = [
   {
@@ -45,17 +47,29 @@ const paymentMethods = [
 
 const PlaceOrder = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const canceled = searchParams.get("canceled") === "true";
+  
   const [deliveryOption, setDeliveryOption] = useState("standard");
   const [paymentMethod, setPaymentMethod] = useState("creditCard");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState({
+    name: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    phone: ""
+  });
   const [cardDetails, setCardDetails] = useState({
     number: "",
     name: "",
     expiry: "",
     cvv: "",
   });
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // Mock cart items - in a real app, this would come from a cart context or state
   const cartItems = [
     { id: 1, name: "Wireless Earbuds", price: 59.99, quantity: 1 },
     { id: 2, name: "Smart Watch", price: 129.99, quantity: 1 },
@@ -65,10 +79,27 @@ const PlaceOrder = () => {
   const deliveryFee = deliveryOption === "express" ? 9.99 : 0;
   const total = subtotal + deliveryFee;
 
-  const handlePlaceOrder = async () => {
-    setIsProcessingPayment(true);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setCustomerInfo(prev => ({ ...prev, [name]: value }));
+  };
 
-    // Validate required fields
+  const handleCardInputChange = (e) => {
+    const { name, value } = e.target;
+    setCardDetails(prev => ({ ...prev, [name]: value }));
+  };
+
+  const validateForm = () => {
+    // Basic validation
+    if (!customerInfo.name || !customerInfo.email || !customerInfo.address) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
     if (paymentMethod === "creditCard") {
       if (!cardDetails.number || !cardDetails.name || !cardDetails.expiry || !cardDetails.cvv) {
         toast({
@@ -76,25 +107,52 @@ const PlaceOrder = () => {
           description: "Please fill in all card details",
           variant: "destructive",
         });
-        setIsProcessingPayment(false);
-        return;
+        return false;
       }
     }
+    
+    return true;
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!validateForm()) return;
+    
+    setIsProcessingPayment(true);
 
     try {
+      // Format customer address for the order record
+      const formattedAddress = `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.state} ${customerInfo.zipCode}`;
+      
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
           items: cartItems,
           total: total,
+          customerInfo: {
+            name: customerInfo.name,
+            email: customerInfo.email,
+            address: formattedAddress,
+            phone: customerInfo.phone,
+          },
         },
       });
 
       if (error) throw error;
-      if (!data?.url) throw new Error('No checkout URL received');
-
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      
+      if (paymentMethod === "cod") {
+        // For cash on delivery, show success message and redirect
+        toast({
+          title: "Order Placed Successfully",
+          description: "Your order has been placed and will be delivered soon.",
+          variant: "success",
+        });
+        navigate("/returns?success=true");
+      } else {
+        // For credit card, redirect to Stripe
+        if (!data?.url) throw new Error('No checkout URL received');
+        window.location.href = data.url;
+      }
     } catch (error) {
+      console.error("Payment error:", error);
       toast({
         title: "Error",
         description: "Failed to process payment. Please try again.",
@@ -115,27 +173,107 @@ const PlaceOrder = () => {
             <Badge variant="info">Secure</Badge>
           </div>
 
+          {canceled && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Payment Canceled</AlertTitle>
+              <AlertDescription>
+                Your payment was canceled. You can try again or choose a different payment method.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left column - Delivery & Payment */}
             <div className="flex-grow space-y-8">
-              {/* Delivery Address */}
+              {/* Customer Information */}
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <MapPin className="h-5 w-5" />
-                    Delivery Address
-                  </h2>
-                  <Button variant="ghost" size="sm">
-                    Change
-                  </Button>
-                </div>
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Customer Information
+                </h2>
 
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
-                  <p className="font-medium">Home</p>
-                  <p className="text-gray-600 dark:text-gray-300">123 Main Street, Apt 4B</p>
-                  <p className="text-gray-600 dark:text-gray-300">New York, NY 10001</p>
-                  <p className="text-gray-600 dark:text-gray-300">United States</p>
-                  <p className="text-gray-600 dark:text-gray-300">Phone: (555) 123-4567</p>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Full Name *</Label>
+                      <Input 
+                        id="name" 
+                        name="name" 
+                        value={customerInfo.name} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="email">Email Address *</Label>
+                      <Input 
+                        id="email" 
+                        name="email" 
+                        type="email"
+                        value={customerInfo.email} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="address">Delivery Address *</Label>
+                    <Textarea 
+                      id="address" 
+                      name="address" 
+                      value={customerInfo.address} 
+                      onChange={handleInputChange} 
+                      required 
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input 
+                        id="city" 
+                        name="city" 
+                        value={customerInfo.city} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="state">State *</Label>
+                      <Input 
+                        id="state" 
+                        name="state" 
+                        value={customerInfo.state} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="zipCode">Zip Code *</Label>
+                      <Input 
+                        id="zipCode" 
+                        name="zipCode" 
+                        value={customerInfo.zipCode} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Input 
+                      id="phone" 
+                      name="phone" 
+                      value={customerInfo.phone} 
+                      onChange={handleInputChange} 
+                      required 
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -190,18 +328,20 @@ const PlaceOrder = () => {
                       <Label htmlFor="cardNumber">Card Number</Label>
                       <Input
                         id="cardNumber"
+                        name="number"
                         placeholder="1234 5678 9012 3456"
                         value={cardDetails.number}
-                        onChange={(e) => setCardDetails({ ...cardDetails, number: e.target.value })}
+                        onChange={handleCardInputChange}
                       />
                     </div>
                     <div>
                       <Label htmlFor="cardName">Name on Card</Label>
                       <Input
                         id="cardName"
+                        name="name"
                         placeholder="John Doe"
                         value={cardDetails.name}
-                        onChange={(e) => setCardDetails({ ...cardDetails, name: e.target.value })}
+                        onChange={handleCardInputChange}
                       />
                     </div>
                     <div className="flex gap-4">
@@ -209,20 +349,22 @@ const PlaceOrder = () => {
                         <Label htmlFor="cardExpiry">Expiry Date</Label>
                         <Input
                           id="cardExpiry"
+                          name="expiry"
                           placeholder="MM/YY"
                           value={cardDetails.expiry}
-                          onChange={(e) => setCardDetails({ ...cardDetails, expiry: e.target.value })}
+                          onChange={handleCardInputChange}
                         />
                       </div>
                       <div className="flex-1">
                         <Label htmlFor="cardCvv">CVV</Label>
                         <Input
                           id="cardCvv"
+                          name="cvv"
                           type="password"
                           placeholder="123"
                           maxLength={4}
                           value={cardDetails.cvv}
-                          onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value })}
+                          onChange={handleCardInputChange}
                         />
                       </div>
                     </div>
