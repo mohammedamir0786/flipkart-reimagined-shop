@@ -1,5 +1,4 @@
-
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { MinusCircle, PlusCircle, ShoppingCart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ interface CartItem {
 
 const Cart = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   // We'll use mock data for the cart items
   const [cartItems, setCartItems] = useState<CartItem[]>(
     featuredProducts.slice(0, 3).map(product => ({
@@ -70,10 +70,7 @@ const Cart = () => {
   };
   
   const handleCheckout = () => {
-    toast({
-      title: "Proceeding to Checkout",
-      description: "This feature is not fully implemented in this demo.",
-    });
+    navigate('/place-order');
   };
   
   return (
