@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, CreditCard, Truck, Home, MapPin, ChevronsRight } from "lucide-react";
@@ -12,6 +11,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const deliveryOptions = [
   {
@@ -54,8 +54,8 @@ const PlaceOrder = () => {
     expiry: "",
     cvv: "",
   });
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // Sample cart items - in a real app, these would come from a cart context
   const cartItems = [
     { id: 1, name: "Wireless Earbuds", price: 59.99, quantity: 1 },
     { id: 2, name: "Smart Watch", price: 129.99, quantity: 1 },
@@ -65,8 +65,8 @@ const PlaceOrder = () => {
   const deliveryFee = deliveryOption === "express" ? 9.99 : 0;
   const total = subtotal + deliveryFee;
 
-  const handlePlaceOrder = () => {
-    setIsProcessing(true);
+  const handlePlaceOrder = async () => {
+    setIsProcessingPayment(true);
 
     // Validate required fields
     if (paymentMethod === "creditCard") {
@@ -76,20 +76,32 @@ const PlaceOrder = () => {
           description: "Please fill in all card details",
           variant: "destructive",
         });
-        setIsProcessing(false);
+        setIsProcessingPayment(false);
         return;
       }
     }
 
-    // In a real app, this would be an API call to process payment and create order
-    setTimeout(() => {
-      setIsProcessing(false);
-      toast({
-        title: "Order placed successfully!",
-        description: "Thank you for your purchase. You can track your order in your account.",
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: {
+          items: cartItems,
+          total: total,
+        },
       });
-      navigate("/returns"); // Redirect to returns page for demo
-    }, 2000);
+
+      if (error) throw error;
+      if (!data?.url) throw new Error('No checkout URL received');
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process payment. Please try again.",
+        variant: "destructive",
+      });
+      setIsProcessingPayment(false);
+    }
   };
 
   return (
@@ -259,10 +271,19 @@ const PlaceOrder = () => {
                 <Button
                   onClick={handlePlaceOrder}
                   className="w-full mt-6"
-                  disabled={isProcessing}
+                  disabled={isProcessingPayment}
                 >
-                  {isProcessing ? "Processing..." : "Place Order"}
-                  {!isProcessing && <ChevronsRight className="ml-2 h-4 w-4" />}
+                  {isProcessingPayment ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>Place Order<ChevronsRight className="ml-2 h-4 w-4" /></>
+                  )}
                 </Button>
               </div>
 
